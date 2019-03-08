@@ -9,9 +9,13 @@
     
 #>
 $vCenterServer = "vCenter_Server_FQDN/IP_Address"
+$SkylineRole = "Name of Skyline Role"
+$RoleExists = Get-VIRole -Server $vCenterServer -Role $SkylineRole
 
-$RoleExists = Get-VIRole -Server $vCenterServer -Role Skyline
+Write-Host "Connecting to $vCenterServer"'n -ForeGroundColor Blue
+Connect-VIServer $vCenterServer
 
+Write-Host "Check Skyline Role Already Exists"'n -ForeGroundColor Blue
 If ($RoleExists) {
     Write "Skyline Role Already Exists"
     Exit
@@ -19,10 +23,18 @@ If ($RoleExists) {
 Else {
     Write "Skyline Role Will Be Created"
 
-New-VIRole -Name Skyline -Privilege (Get-VIPrivilege -Role Readonly)
-Set-VIRole -Role Skyline -AddPrivilege (Get-VIPrivilege -id Global.Licenses)
-Set-VIRole -Role Skyline -AddPrivilege (Get-VIPrivilege -id Global.Settings)
-Set-VIRole -Role Skyline -AddPrivilege (Get-VIPrivilege -id Global.Health)
-Set-VIRole -Role Skyline -AddPrivilege (Get-VIPrivilege -id Global.Diagnostics)
- 
-Get-VIPrivilege -Role Skyline
+Write-Host "Creating Skyline Role"'n -ForeGroundColor Blue
+New-VIRole -Name $SkylineRole -Privilege (Get-VIPrivilege -Role Readonly)
+$SkylinePrivleges = @(
+  'Global.Licenses'
+  'Global.Settings'
+  'Global.Health'
+  'Global.Diagnostics')
+Set-VIRole -Name $SkylineRole -Privilege (Get-VIPrivilege -id $SkylinePrivleges) | Out-Null
+#Set-VIRole -Role $SkylineRole -AddPrivilege (Get-VIPrivilege -id Global.Licenses)
+#Set-VIRole -Role $SkylineRole -AddPrivilege (Get-VIPrivilege -id Global.Settings)
+#Set-VIRole -Role $SkylineRole -AddPrivilege (Get-VIPrivilege -id Global.Health)
+#Set-VIRole -Role $SkylineRole -AddPrivilege (Get-VIPrivilege -id Global.Diagnostics)
+
+Write-Host "Disconnecting from $vCenterServer"'n -ForeGroundColor Blue
+Disconnect-VIServer -Server $vCenterServer -Confirm:$false
